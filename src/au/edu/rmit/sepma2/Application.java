@@ -14,17 +14,17 @@ import java.util.regex.Pattern;
  * Main application class for Software Engineering Project Management Study Period 3
  * 2020, Group 12 Assignment 2
  * 
- * @author Rob Beardow ------ s3641721@student.rmit.edu.au
- * @author Tyson Horsewell -- s3799530@student.rmit.edu.au
- * @author Jordon Edmondson - s3779499@student.rmit.edu.au
+ * @author Rob Beardow ------> s3641721@student.rmit.edu.au
+ * @author Tyson Horsewell --> s3799530@student.rmit.edu.au
+ * @author Jordon Edmondson -> s3779499@student.rmit.edu.au
  *
  */
 public class Application
 {
 
-   private static final Scanner scanner = new Scanner(System.in);
+   private Scanner scanner = new Scanner(System.in);
 
-   private final Set<User> users = new HashSet<>();
+   private Set<User> users = new HashSet<>();
    private List<Ticket> tickets = new ArrayList<>();
    private User currentUser = null;
 
@@ -33,11 +33,11 @@ public class Application
     */
    public static void main(final String[] args)
    {
-      final Application app = new Application();
+      Application app = new Application();
       app.handleMainMenu();
    }
 
-   protected Application()
+   public Application()
    {
       initDefaultUserDatabase();
    }
@@ -48,11 +48,7 @@ public class Application
     */
    private void handleMainMenu()
    {
-      //System.out.println(Role.values().length);
-      //System.out.println(Role.values()[0]);
-
       int selection;
-      List<Integer> allowedMenuItems = new ArrayList<>(Arrays.asList(1, 2, 3, 4));
       do
       {
          System.out.println("-------------------------------");
@@ -63,7 +59,7 @@ public class Application
          System.out.println("-- 3. Reset Password");
          System.out.println("-- 4. Exit");
          System.out.println("-------------------------------");
-         selection = getIntInput("Your Selection: ", allowedMenuItems);
+         selection = getIntInput("Your Selection: ", 1, 2, 3, 4);
          System.out.println();
          switch (selection)
          {
@@ -87,7 +83,7 @@ public class Application
    /**
     * the login form
     */
-   protected void userLogin()
+   private void userLogin()
    {
       System.out.println("-------------------------------");
       System.out.println("----- IT Ticketing System -----");
@@ -108,13 +104,12 @@ public class Application
          }
          else
          {
-            System.out.println("Error: The Password is incorrect.");
+            printErr("The Password is incorrect.");
          }
       }
       else
       {
-         System.out
-                  .println("Error: There is no user by that username in the system.");
+         printErr("There is no user by that username in the system.");
       }
    }
 
@@ -122,7 +117,7 @@ public class Application
     * Show the staff login area which is a form that includes their tickets and
     * ability to add a new one
     */
-   protected void staffloginArea()
+   private void staffloginArea()
    {
       int selection, i = 0, j = 3;
       List<Integer> allowedMenuItems = new ArrayList<>(Arrays.asList(1, 2));
@@ -145,10 +140,11 @@ public class Application
             i = 0;
             for (Ticket ticket : tickets)
             {
-               if (ticket.username.equalsIgnoreCase(currentUser.getUsername()))
+               if (ticket.getUserName().equalsIgnoreCase(currentUser.getUsername()))
                {
-                  myTickets.add(ticket);
-                  System.out.println((i+j) + ". " + ticket.getSubmissionDate() + " - " +
+                  myTickets.add(i, ticket);
+                  System.out.println((i + j) + ". " + ticket.getSubmissionDate() +
+                                     " - " +
                                      ticket.getDescription());
                   allowedMenuItems.add(j + i);
                   i++;
@@ -156,7 +152,8 @@ public class Application
             }
             System.out.println("-------------------------------");
          }
-         selection = getIntInput("Your Selection: ", allowedMenuItems);
+         selection = getIntInput("Your Selection: ",
+                                 allowedMenuItems.toArray(new Integer[0]));
          System.out.println();
          switch (selection)
          {
@@ -176,7 +173,7 @@ public class Application
    /**
     * Form to create a ticket
     */
-   protected void createTicket()
+   private void createTicket()
    {
       System.out.println("-------------------------------");
       System.out.println("----- IT Ticketing System -----");
@@ -198,7 +195,7 @@ public class Application
                   .equalsIgnoreCase(Objects.isNull(user) ? "" : user.getUsername());
          if (!exists)
          {
-            System.out.println("Error: That username does not exist.");
+            printErr("That username does not exist.");
          }
       } while (!exists);
 
@@ -226,9 +223,8 @@ public class Application
    /**
     * show an individual ticket after created to see progress
     */
-   protected void showTicket(Ticket t)
+   private void showTicket(Ticket t)
    {
-      List<Integer> allowedMenuItems = new ArrayList<>(Arrays.asList(1));
       int selection;
       System.out.println("-------------------------------");
       System.out.println("----- IT Ticketing System -----");
@@ -241,13 +237,13 @@ public class Application
       System.out.println("Ticket Submitted: " + t.getSubmissionDate());
       System.out.println("Ticket Description: \n" + t.getDescription());
       System.out.println();
-      System.out.println("Severity" + t.getSeverity());
+      System.out.println("Severity: " + t.getSeverity());
 
       System.out.println("-------------------------------");
       do
       {
          selection =
-                  getIntInput("Type \"1\" to return to admin: ", allowedMenuItems);
+                  getIntInput("Type \"1\" to return to admin: ", 1);
          System.out.println();
       } while (selection != 1);
    }
@@ -255,7 +251,7 @@ public class Application
    /**
     * Form to create a user
     */
-   protected void createUser()
+   private void createUser()
    {
       System.out.println("-------------------------------");
       System.out.println("----- IT Ticketing System -----");
@@ -277,7 +273,7 @@ public class Application
                   .equalsIgnoreCase(Objects.isNull(user) ? "" : user.getUsername());
          if (exists)
          {
-            System.out.println("Error: that username is taken try another.");
+            printErr("that username is taken try another.");
          }
       } while (exists);
 
@@ -295,7 +291,7 @@ public class Application
    /**
     * Form to reset the password
     */
-   protected void resetPassword()
+   private void resetPassword()
    {
       System.out.println("-------------------------------");
       System.out.println("----- IT Ticketing System -----");
@@ -314,19 +310,19 @@ public class Application
       }
       else
       {
-         System.out
-                  .println("Error: There is no user by that username in the system.");
+         printErr("There is no user by that username in the system.");
       }
    }
 
    /**
-    * Get a string input from the command-line
+    * Get a string input from the command-line basically every input method uses this
+    * as a base and validates the data before returning it
     * 
     * @param label
     *           the description of what needs to be input
     * @return a String of what was input
     */
-   protected String getStringInput(String label)
+   private String getStringInput(String label)
    {
       String s;
       do
@@ -346,7 +342,7 @@ public class Application
     *           for a match validation
     * @return a String of what was input
     */
-   protected String getStringInput(String label, String regEx)
+   private String getStringInput(String label, String regEx)
    {
       String s;
 
@@ -361,7 +357,7 @@ public class Application
          isMatch = matcher.find();
          if (!isMatch)
          {
-            System.out.println("Error: The text is not in the correct format.");
+            printErr("The text is not in the correct format.");
          }
       } while (!isMatch);
       return s;
@@ -376,14 +372,13 @@ public class Application
     * 
     * @see au.edu.rmit.sepma2.Role
     */
-   protected Role getRoleInput(String label)
+   private Role getRoleInput(String label)
    {
       int s;
-      List<Integer> allowedValues = new ArrayList<>(Arrays.asList(1, 2, 3));
       Role r = null;
       do
       {
-         s = getIntInput(label, allowedValues);
+         s = getIntInput(label, 1, 2, 3);
          switch (s)
          {
             case 1:
@@ -409,12 +404,12 @@ public class Application
     *           this is an array of integers that is allowed to be validated against
     * @return
     */
-   protected int getIntInput(String label, List<Integer> allowedIntegers)
+   private int getIntInput(String label, Integer... allowedIntegers)
    {
       String s;
       int val;
 
-      if (allowedIntegers.isEmpty())
+      if (allowedIntegers.length == 0)
       {
          s = getStringInput(label);
          val = Integer.parseInt(s);
@@ -436,9 +431,7 @@ public class Application
             }
             if (!inArray)
             {
-               System.out
-                        .println("Error: That is an invalid selection.\nPlease enter: " +
-                                 allowedIntegers.toString());
+               printErr("That is an invalid selection.");
             }
          } while (!inArray);
       }
@@ -452,9 +445,10 @@ public class Application
     *           the description of what needs to be input
     * @return an int
     */
-   protected int getIntInput(String label)
+   private int getIntInput(String label)
    {
-      return getIntInput(label);
+      Integer[] p = {};
+      return getIntInput(label, p);
    }
 
    /**
@@ -464,7 +458,7 @@ public class Application
     *           is the username of the user
     * @return the user object
     */
-   protected User findUserByID(String id)
+   private User findUserByID(String id)
    {
       for (User user : users)
       {
@@ -506,142 +500,154 @@ public class Application
                              "This is just some test data 5.", "HIGH"));
    }
 
-   private enum Role
-   {
-      STAFF, TECHNICIAN_LEVEL1, TECHNICIAN_LEVEL2
-   }
-
    /**
-    * The User class
+    * Displays an error message in the correct format
+    * 
+    * @param message
+    *           a string of the error message that needs to be displayed
     */
-   protected static class User
+   private void printErr(String message)
    {
-
-      private final String username; // this will not change
-      private String password;
-      private String firstName;
-      private String lastName;
-      private Role role;
-
-      protected User(
-                     final String username,
-                     final String password,
-                     final String firstName,
-                     final String lastName,
-                     final Role role)
-      {
-         super();
-         this.username = username;
-         this.password = password;
-         this.firstName = firstName;
-         this.lastName = lastName;
-         this.role = role;
-      }
-
-      public void setPassword(String password)
-      {
-         this.password = password;
-      }
-
-      public String getUsername()
-      {
-         return username;
-      }
-
-      public String getPassword()
-      {
-         return password;
-      }
-
-      public String getFirstName()
-      {
-         return firstName;
-      }
-
-      public String getLastName()
-      {
-         return lastName;
-      }
-
-      public Role getRole()
-      {
-         return role;
-      }
-
+      System.out.println("ERROR: " + message);
+      System.out.println();
    }
 
-   protected static class Ticket
+}
+
+enum Role
+{
+   STAFF, TECHNICIAN_LEVEL1, TECHNICIAN_LEVEL2;
+}
+
+/**
+ * The User class
+ */
+class User
+{
+
+   private final String username; // this will not change
+   private String password;
+   private String firstName;
+   private String lastName;
+   private Role role;
+
+   public User(
+               final String username,
+               final String password,
+               final String firstName,
+               final String lastName,
+               final Role role)
    {
-
-      private final String firstName;
-      private final String lastName;
-      private final String username; // username
-      private final String contactNumber;
-      private final String submissionDate;
-      private final String description;
-      private boolean isOpen; // status
-      private String severity;
-
-      // Fill in the ticket
-      public Ticket(String firstName, String lastName, String id,
-                    String contactNumber, String submissionDate, String description,
-                    String severity)
-      {
-         super();
-         this.firstName = firstName;
-         this.lastName = lastName;
-         this.username = id; // username
-         this.contactNumber = contactNumber;
-         this.submissionDate = submissionDate;
-         this.description = description;
-         this.severity = severity;
-         this.isOpen = false;
-      }
-
-      public boolean isOpen()
-      {
-         return isOpen;
-      }
-
-      public void setIsOpen(boolean isOpen)
-      {
-         this.isOpen = isOpen;
-      }
-
-      public String getSeverity()
-      {
-         return severity;
-      }
-
-      public String getFirstName()
-      {
-         return firstName;
-      }
-
-      public String getLastName()
-      {
-         return lastName;
-      }
-
-      public String getUserName()
-      {
-         return username;
-      }
-
-      public String getContactNumber()
-      {
-         return contactNumber;
-      }
-
-      public String getSubmissionDate()
-      {
-         return submissionDate;
-      }
-
-      public String getDescription()
-      {
-         return description;
-      }
-
+      super();
+      this.username = username;
+      this.password = password;
+      this.firstName = firstName;
+      this.lastName = lastName;
+      this.role = role;
    }
+
+   public void setPassword(String password)
+   {
+      this.password = password;
+   }
+
+   public String getUsername()
+   {
+      return username;
+   }
+
+   public String getPassword()
+   {
+      return password;
+   }
+
+   public String getFirstName()
+   {
+      return firstName;
+   }
+
+   public String getLastName()
+   {
+      return lastName;
+   }
+
+   public Role getRole()
+   {
+      return role;
+   }
+
+}
+
+class Ticket
+{
+
+   private final String firstName;
+   private final String lastName;
+   private final String username; // username
+   private final String contactNumber;
+   private final String submissionDate;
+   private final String description;
+   private boolean isOpen; // status
+   private String severity;
+
+   // Fill in the ticket
+   public Ticket(String firstName, String lastName, String id,
+                 String contactNumber, String submissionDate, String description,
+                 String severity)
+   {
+      this.firstName = firstName;
+      this.lastName = lastName;
+      this.username = id; // username
+      this.contactNumber = contactNumber;
+      this.submissionDate = submissionDate;
+      this.description = description;
+      this.severity = severity;
+      this.isOpen = false;
+   }
+
+   public boolean isOpen()
+   {
+      return isOpen;
+   }
+
+   public void setIsOpen(boolean isOpen)
+   {
+      this.isOpen = isOpen;
+   }
+
+   public String getSeverity()
+   {
+      return severity;
+   }
+
+   public String getFirstName()
+   {
+      return firstName;
+   }
+
+   public String getLastName()
+   {
+      return lastName;
+   }
+
+   public String getUserName()
+   {
+      return username;
+   }
+
+   public String getContactNumber()
+   {
+      return contactNumber;
+   }
+
+   public String getSubmissionDate()
+   {
+      return submissionDate;
+   }
+
+   public String getDescription()
+   {
+      return description;
+   }
+
 }
