@@ -27,6 +27,9 @@ public class Application
    private Set<User> users = new HashSet<>();
    private List<Ticket> tickets = new ArrayList<>();
    private User currentUser = null;
+   private final int interfaceWidth = 51;
+   private final String interfaceDash = "-";
+   private final String lD = interfaceDash + interfaceDash; // leading Dash
 
    /**
     * Main entry point for the IT ticketing system.
@@ -51,14 +54,15 @@ public class Application
       int selection;
       do
       {
-         System.out.println("-------------------------------");
-         System.out.println("----- IT Ticketing System -----");
-         System.out.println("-------------------------------");
-         System.out.println("-- 1. Login");
-         System.out.println("-- 2. Create Account");
-         System.out.println("-- 3. Reset Password");
-         System.out.println("-- 4. Exit");
-         System.out.println("-------------------------------");
+         System.out.println(buildDashes(interfaceDash, interfaceWidth));
+         System.out.print(buildMenu(interfaceDash, interfaceWidth, 
+                                    "IT Ticketing System"));
+         System.out.println(buildDashes(interfaceDash, interfaceWidth));
+         System.out.println(lD+" 1. Login");
+         System.out.println(lD+" 2. Create Account");
+         System.out.println(lD+" 3. Reset Password");
+         System.out.println(lD+" 4. Exit");
+         System.out.println(buildDashes(interfaceDash, interfaceWidth));
          selection = getIntInput("Your Selection: ", 1, 2, 3, 4);
          System.out.println();
          switch (selection)
@@ -74,7 +78,7 @@ public class Application
                resetPassword();
                break;
             case 4:
-               System.out.println("Exiting...");
+               printAlert("Exiting...");
                break;
          }
       } while (selection != 4);
@@ -85,10 +89,10 @@ public class Application
     */
    private void userLogin()
    {
-      System.out.println("-------------------------------");
-      System.out.println("----- IT Ticketing System -----");
-      System.out.println("--------- User Login ----------");
-      System.out.println("-------------------------------");
+      System.out.println(buildDashes(interfaceDash, interfaceWidth));
+      System.out.print(buildMenu(interfaceDash, interfaceWidth, 
+                                 "IT Ticketing System", "User Login"));
+      System.out.println(buildDashes(interfaceDash, interfaceWidth));
 
       String id = getStringInput("ID: ");
       // get the user that has that ID
@@ -128,13 +132,14 @@ public class Application
 
       do
       {
-         System.out.println("-------------------------------");
-         System.out.println("----- IT Ticketing System -----");
-         System.out.println("-- Your Tickets :" + currentUser.getFirstName());
-         System.out.println("-------------------------------");
-         System.out.println("-- 1. Create a New Ticket");
-         System.out.println("-- 2. Logout");
-         System.out.println("-------------------------------");
+         System.out.println(buildDashes(interfaceDash, interfaceWidth));
+         System.out.print(buildMenu(interfaceDash, interfaceWidth, 
+                                    "IT Ticketing System",
+                                    "Your Tickets - " + currentUser.getFirstName()));
+         System.out.println(buildDashes(interfaceDash, interfaceWidth));
+         System.out.println(lD+" 1. Create a New Ticket");
+         System.out.println(lD+" 2. Logout");
+         System.out.println(buildDashes(interfaceDash, interfaceWidth));
          if (!tickets.isEmpty())
          {
             i = 0;
@@ -143,14 +148,14 @@ public class Application
                if (ticket.getUserName().equalsIgnoreCase(currentUser.getUsername()))
                {
                   myTickets.add(i, ticket);
-                  System.out.println((i + j) + ". " + ticket.getSubmissionDate() +
+                  System.out.println(lD+" "+ (i + j) + ". " + ticket.getSubmissionDate() +
                                      " - " +
                                      ticket.getDescription());
                   allowedMenuItems.add(j + i);
                   i++;
                }
             }
-            System.out.println("-------------------------------");
+            System.out.println(buildDashes(interfaceDash, interfaceWidth));
          }
          selection = getIntInput("Your Selection: ",
                                  allowedMenuItems.toArray(new Integer[0]));
@@ -175,10 +180,11 @@ public class Application
     */
    private void createTicket()
    {
-      System.out.println("-------------------------------");
-      System.out.println("----- IT Ticketing System -----");
-      System.out.println("---------- New Ticket ---------");
-      System.out.println("-------------------------------");
+      System.out.println(buildDashes(interfaceDash, interfaceWidth));
+      System.out.print(buildMenu(interfaceDash, interfaceWidth, 
+                                 "IT Ticketing System",
+                                 "New Ticket"));
+      System.out.println(buildDashes(interfaceDash, interfaceWidth));
 
       String fName = getStringInput("First Name: ");
       String lName = getStringInput("Last Name: ");
@@ -215,8 +221,7 @@ public class Application
       t.setIsOpen(true);
       if (tickets.add(t))
       {
-         System.out.println("New Open Ticket has been added to the system.");
-         System.out.println();
+         printAlert("New Open Ticket has been added to the system.");
       }
    }
 
@@ -226,20 +231,21 @@ public class Application
    private void showTicket(Ticket t)
    {
       int selection;
-      System.out.println("-------------------------------");
-      System.out.println("----- IT Ticketing System -----");
-      System.out.println("----------- Ticket ------------");
-      System.out.println("-------------------------------");
+      System.out.println(buildDashes(interfaceDash, interfaceWidth));
+      System.out.print(buildMenu(interfaceDash, interfaceWidth, 
+                                 "IT Ticketing System",
+                                 "Ticket"));
+      System.out.println(buildDashes(interfaceDash, interfaceWidth));
 
-      System.out.println(t.getFirstName() + " " + t.getLastName() + " (" +
+      System.out.println("  "+t.getFirstName() + " " + t.getLastName() + " (" +
                          t.getUserName() + ")");
-      System.out.println("Phone: " + t.getContactNumber());
-      System.out.println("Ticket Submitted: " + t.getSubmissionDate());
-      System.out.println("Ticket Description: \n" + t.getDescription());
+      System.out.println("  Phone: " + t.getContactNumber());
+      System.out.println("  Ticket Submitted: " + t.getSubmissionDate());
+      System.out.println("  Ticket Description: \n" + t.getDescription());
       System.out.println();
-      System.out.println("Severity: " + t.getSeverity());
+      System.out.println("  Severity: " + t.getSeverity());
 
-      System.out.println("-------------------------------");
+      System.out.println(buildDashes(interfaceDash, interfaceWidth));
       do
       {
          selection =
@@ -253,10 +259,11 @@ public class Application
     */
    private void createUser()
    {
-      System.out.println("-------------------------------");
-      System.out.println("----- IT Ticketing System -----");
-      System.out.println("---------- New User -----------");
-      System.out.println("-------------------------------");
+      System.out.println(buildDashes(interfaceDash, interfaceWidth));
+      System.out.print(buildMenu(interfaceDash, interfaceWidth, 
+                                 "IT Ticketing System",
+                                 "New User"));
+      System.out.println(buildDashes(interfaceDash, interfaceWidth));
 
       String fName = getStringInput("First Name: ");
       String lName = getStringInput("Last Name: ");
@@ -273,7 +280,7 @@ public class Application
                   .equalsIgnoreCase(Objects.isNull(user) ? "" : user.getUsername());
          if (exists)
          {
-            printErr("that username is taken try another.");
+            printErr("That username is taken try another.");
          }
       } while (exists);
 
@@ -282,8 +289,7 @@ public class Application
 
       if (users.add(new User(id, p, fName, lName, r)))
       {
-         System.out.println("New User has been added to the system.");
-         System.out.println();
+         printAlert("New User has been added to the system.");
       }
 
    }
@@ -293,10 +299,11 @@ public class Application
     */
    private void resetPassword()
    {
-      System.out.println("-------------------------------");
-      System.out.println("----- IT Ticketing System -----");
-      System.out.println("------- Reset Password --------");
-      System.out.println("-------------------------------");
+      System.out.println(buildDashes(interfaceDash, interfaceWidth));
+      System.out.print(buildMenu(interfaceDash, interfaceWidth, 
+                                 "IT Ticketing System",
+                                 "Reset Password"));
+      System.out.println(buildDashes(interfaceDash, interfaceWidth));
 
       String id = getStringInput("ID: ");
       User user = findUserByID(id);
@@ -305,8 +312,7 @@ public class Application
       if (id.equalsIgnoreCase(Objects.isNull(user) ? "" : user.getUsername()))
       {
          user.setPassword(getStringInput("Password: "));
-         System.out.println("The password has been reset.");
-         System.out.println();
+         printAlert("The password has been reset.");
       }
       else
       {
@@ -327,7 +333,7 @@ public class Application
       String s;
       do
       {
-         System.out.print(label);
+         System.out.print(lD +" "+ label);
          s = scanner.nextLine();
          System.out.println();
       } while (Objects.isNull(s) || s.isEmpty());
@@ -508,8 +514,38 @@ public class Application
     */
    private void printErr(String message)
    {
-      System.out.println("ERROR: " + message);
+      message = "  **  ERROR: " + message + " **";
+      System.out.println("  "+ buildDashes("*", message.length()) +
+                         "\n" + message + "\n" +
+                         "  "+ buildDashes("*", message.length()));
       System.out.println();
+   }
+   
+   private void printAlert(String message) {
+      System.out.println(">> "+ message +" <<");
+      System.out.println();
+   }
+   
+   private String buildMenu(String dash, int length, String... titles) {
+      String s = "", tLine;
+      int tLen;
+      for (String title : titles) {
+         tLen = title.length();
+         tLine = buildDashes(dash, (length - tLen - 2)/ 2);
+         tLine += " " + title + " ";
+         tLine += buildDashes(dash, length - tLine.length());
+         tLine += "\n";
+         s += tLine;
+      }
+      
+      return s;
+   }
+   private String buildDashes(String dash, int length) {
+      String s = "";
+      for (int i = 0; i < length; i++ ) {
+         s += dash;
+      }
+      return s;
    }
 
 }
