@@ -312,7 +312,7 @@ public class Application
       if (id.equalsIgnoreCase(Objects.isNull(user) ? "" : user.getUsername()))
       {
          user.setPassword(getStringInput("Password: "));
-         printAlert("The password has been reset.");
+         printAlert("The password has been reset. When you login next time you will need to use your new password.");
       }
       else
       {
