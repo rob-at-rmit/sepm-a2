@@ -123,8 +123,8 @@ public class Application
     */
    private void staffloginArea()
    {
-      int selection, i = 0, j = 3;
-      List<Integer> allowedMenuItems = new ArrayList<>(Arrays.asList(1, 2));
+      int selection, i = 0, j = 5;
+      List<Integer> allowedMenuItems = new ArrayList<>(Arrays.asList(1, 2, 3, 4));
       List<Ticket> myTickets = new ArrayList<>();
 
       // get tickets
@@ -138,7 +138,9 @@ public class Application
                                     "Your Tickets - " + currentUser.getFirstName()));
          System.out.println(buildDashes(interfaceDash, interfaceWidth));
          System.out.println(lD+" 1. Create a New Ticket");
-         System.out.println(lD+" 2. Logout");
+         System.out.println(lD+" 2. Show My Open Tickets");
+         System.out.println(lD+" 3. Show Closed Tickets");
+         System.out.println(lD+" 4. Logout");
          System.out.println(buildDashes(interfaceDash, interfaceWidth));
          if (!tickets.isEmpty())
          {
@@ -157,6 +159,7 @@ public class Application
             }
             System.out.println(buildDashes(interfaceDash, interfaceWidth));
          }
+
          selection = getIntInput("Your Selection: ",
                                  allowedMenuItems.toArray(new Integer[0]));
          System.out.println();
@@ -165,15 +168,23 @@ public class Application
             case 1:
                createTicket();
                break;
-            case 2:
+             case 2:
+               showOpenTickets();
+               break;
+            case 3:
+               showClosedTickets();
+               break;
+            case 4:
                // logout
                break;
             default:
                showTicket(myTickets.get(selection - j));
          }
-      } while (selection != 2);
+      } while (selection != 4);
 
    }
+
+
 
    /**
     * Form to create a ticket
@@ -246,12 +257,110 @@ public class Application
       System.out.println("  Severity: " + t.getSeverity());
 
       System.out.println(buildDashes(interfaceDash, interfaceWidth));
-      do
+
+      System.out.println("Type \"1\" to return to admin: ");
+      System.out.println("Type \"2\" to change severity of ticket: ");
+      System.out.println("Type \"3\" to close ticket: ");
+
+      selection = getIntInput("Enter selection: ");
+      switch (selection)
       {
-         selection =
-                  getIntInput("Type \"1\" to return to admin: ", 1);
-         System.out.println();
-      } while (selection != 1);
+         case 1:
+         break;
+         case 2: 
+         changeSeverity(t);
+         case 3:
+         t.setIsOpen(false);
+
+      }
+   }
+
+   private void showOpenTickets(){
+      int selection, i;
+      List<Ticket> myOpenTickets = new ArrayList<>();
+
+      if (!tickets.isEmpty())
+      {
+         i = 0;
+         for (Ticket ticket : tickets)
+         {
+            if (ticket.getUserName().equalsIgnoreCase(currentUser.getUsername()) && ticket.isOpen()==true)
+            {
+               myOpenTickets.add(i, ticket);
+               System.out.println(lD+" "+ (i+1) + ". " + ticket.getSubmissionDate() +
+                                     " - " +
+                                     ticket.getDescription());
+               i++;
+            }
+         }
+         
+         System.out.println(buildDashes(interfaceDash, interfaceWidth));
+         do
+         {
+            selection =
+                     getIntInput("Type \"1\" to return to admin: ", 1);
+            System.out.println();
+         } while (selection != 1);
+      }
+   }
+
+      private void showClosedTickets(){
+         int selection, i;
+         List<Ticket> closedTickets = new ArrayList<>();
+   
+         if (!tickets.isEmpty())
+         {
+            i = 0;
+            for (Ticket ticket : tickets)
+            {
+               if (ticket.isOpen()==false)
+               {
+                  closedTickets.add(i, ticket);
+                  System.out.println(lD+" "+ (i+1) + ". " + ticket.getSubmissionDate() +
+                                        " - " +
+                                        ticket.getDescription());
+                  i++;
+               }
+            }
+            
+            System.out.println(buildDashes(interfaceDash, interfaceWidth));
+            do
+            {
+               selection =
+                        getIntInput("Type \"1\" to return to admin: ", 1);
+               System.out.println();
+            } while (selection != 1);
+         }
+   }
+
+   private void changeSeverity(Ticket t)
+   {
+      String selection;
+
+      System.out.println("Severity is Currently: " + t.getSeverity());
+      System.out.println("What would you like to change the severity to?");
+      System.out.println("LOW");
+      System.out.println("MED");
+      System.out.println("HIGH");
+
+      selection = getStringInput("Enter Selection: ");
+      if (selection.equalsIgnoreCase("LOW"))
+      {
+         t.setSeverity("LOW");
+      }
+      else if (selection.equalsIgnoreCase("MED"))
+      {
+         t.setSeverity("MED");
+      }
+      else if (selection.equalsIgnoreCase("HIGH"))
+      {
+         t.setSeverity("HIGH");
+      }
+      else
+      {
+         System.out.println("Enter one of the above options");
+      }
+
    }
 
    /**
@@ -312,7 +421,7 @@ public class Application
       if (id.equalsIgnoreCase(Objects.isNull(user) ? "" : user.getUsername()))
       {
          user.setPassword(getStringInput("Password: "));
-         printAlert("The password has been reset. When you login next time you will need to use your new password.");
+         printAlert("The password has been reset.");
       }
       else
       {
@@ -649,6 +758,11 @@ class Ticket
    public void setIsOpen(boolean isOpen)
    {
       this.isOpen = isOpen;
+   }
+
+   public void setSeverity(String severity)
+   {
+      this.severity = severity;
    }
 
    public String getSeverity()
