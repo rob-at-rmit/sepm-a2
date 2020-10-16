@@ -3,12 +3,16 @@ package au.edu.rmit.sepma2;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Main application class for Software Engineering Project Management Study Period 3
@@ -27,7 +31,7 @@ public class Application
    private Set<User> users = new HashSet<>();
    private List<Ticket> tickets = new ArrayList<>();
    private User currentUser = null;
-   private final int interfaceWidth = 51;
+   private final int interfaceWidth = 80;
    private final String interfaceDash = "-";
    private final String lD = interfaceDash + interfaceDash; // leading Dash
 
@@ -142,26 +146,7 @@ public class Application
          System.out.println(lD+" 3. Show Closed Tickets");
          System.out.println(lD+" 4. Logout");
          System.out.println(buildDashes(interfaceDash, interfaceWidth));
-         if (!tickets.isEmpty())
-         {
-            i = 0;
-            for (Ticket ticket : tickets)
-            {
-               if (ticket.getUserName().equalsIgnoreCase(currentUser.getUsername()))
-               {
-                  myTickets.add(i, ticket);
-                  System.out.println(lD+" "+ (i + j) + ". " + ticket.getSubmissionDate() +
-                                     " - " +
-                                     ticket.getDescription());
-                  allowedMenuItems.add(j + i);
-                  i++;
-               }
-            }
-            System.out.println(buildDashes(interfaceDash, interfaceWidth));
-         }
-
-         selection = getIntInput("Your Selection: ",
-                                 allowedMenuItems.toArray(new Integer[0]));
+         selection = getIntInput("Your Selection: ", allowedMenuItems.toArray(new Integer[0]));
          System.out.println();
          switch (selection)
          {
@@ -177,8 +162,6 @@ public class Application
             case 4:
                // logout
                break;
-            default:
-               showTicket(myTickets.get(selection - j));
          }
       } while (selection != 4);
 
@@ -201,14 +184,14 @@ public class Application
       String lName = getStringInput("Last Name: ");
 
       // make sure the user name is unique
-      String id;
+      String username;
       boolean exists;
       User user;
       do
       {
-         id = getStringInput("ID: ");
-         user = findUserByID(id);
-         exists = id
+         username = getStringInput("Username : ");
+         user = findUserByID(username);
+         exists = username
                   .equalsIgnoreCase(Objects.isNull(user) ? "" : user.getUsername());
          if (!exists)
          {
@@ -227,7 +210,7 @@ public class Application
       String severity =
                getStringInput("Severity (LOW/MED/HIGH): ", "^(LOW|MED|HIGH)$");
 
-      Ticket t = new Ticket(fName, lName, id, contactNum, submissionDate,
+      Ticket t = new Ticket(fName, lName, username, contactNum, submissionDate,
                             description, severity);
       t.setIsOpen(true);
       if (tickets.add(t))
@@ -266,71 +249,60 @@ public class Application
       switch (selection)
       {
          case 1:
-         break;
+             break;
          case 2: 
-         changeSeverity(t);
+             changeSeverity(t);
+             break;
          case 3:
-         t.setIsOpen(false);
-
+             t.setIsOpen(false);
+             break;
       }
    }
 
    private void showOpenTickets(){
-      int selection, i;
-      List<Ticket> myOpenTickets = new ArrayList<>();
-
-      if (!tickets.isEmpty())
-      {
-         i = 0;
-         for (Ticket ticket : tickets)
-         {
-            if (ticket.getUserName().equalsIgnoreCase(currentUser.getUsername()) && ticket.isOpen()==true)
-            {
-               myOpenTickets.add(i, ticket);
-               System.out.println(lD+" "+ (i+1) + ". " + ticket.getSubmissionDate() +
-                                     " - " +
-                                     ticket.getDescription());
-               i++;
-            }
-         }
-         
-         System.out.println(buildDashes(interfaceDash, interfaceWidth));
-         do
-         {
-            selection =
-                     getIntInput("Type \"1\" to return to admin: ", 1);
-            System.out.println();
-         } while (selection != 1);
-      }
+       int selection;
+       do
+       {
+           final List<Ticket> myOpenTickets = new ArrayList<>();
+           for (final Ticket ticket : tickets)
+           {
+               if (ticket.getUserName().equalsIgnoreCase(currentUser.getUsername()) && ticket.isOpen())
+               {
+                   myOpenTickets.add(ticket);
+               }
+           }
+           System.out.println(buildMenu(interfaceDash, interfaceWidth, "My Open Tickets"));
+           System.out.println(buildTicketTable(myOpenTickets));
+           final Integer allowable[] = IntStream.rangeClosed(0, myOpenTickets.size()).boxed().toArray(Integer[]::new);
+           selection = getIntInput("Your selection (type \"0\" to return to admin): ", allowable);
+           if (selection != 0) {
+               showTicket(myOpenTickets.get(selection - 1));               
+           }
+           System.out.println();
+       } while (selection != 0);
    }
 
-      private void showClosedTickets(){
-         int selection, i;
-         List<Ticket> closedTickets = new ArrayList<>();
-   
-         if (!tickets.isEmpty())
+   /**
+    * Show all closed tickets in a table. No user actions on closed tickets in this sprint 
+    * so the only menu option is to return to admin.
+    */
+   private void showClosedTickets(){
+     int selection;
+     final List<Ticket> closedTickets = new ArrayList<>();
+     for (final Ticket ticket : tickets)
+     {
+         if (!ticket.isOpen()) 
          {
-            i = 0;
-            for (Ticket ticket : tickets)
-            {
-               if (ticket.isOpen()==false)
-               {
-                  closedTickets.add(i, ticket);
-                  System.out.println(lD+" "+ (i+1) + ". " + ticket.getSubmissionDate() +
-                                        " - " +
-                                        ticket.getDescription());
-                  i++;
-               }
-            }
-            
-            System.out.println(buildDashes(interfaceDash, interfaceWidth));
-            do
-            {
-               selection =
-                        getIntInput("Type \"1\" to return to admin: ", 1);
-               System.out.println();
-            } while (selection != 1);
+             closedTickets.add(ticket);
          }
+     }
+     System.out.println(buildMenu(interfaceDash, interfaceWidth, "Closed Tickets"));
+     System.out.println(buildTicketTable(closedTickets));
+     do
+     {
+       selection = getIntInput("Type \"0\" to return to admin: ", 0);
+       System.out.println();
+     } while (selection != 0);
    }
 
    private void changeSeverity(Ticket t)
@@ -360,6 +332,8 @@ public class Application
       {
          System.out.println("Enter one of the above options");
       }
+      
+      System.out.println("Ticket " + t.hashCode() + " is now " + t.getSeverity());
 
    }
 
@@ -655,6 +629,56 @@ public class Application
          s += dash;
       }
       return s;
+   }
+   
+   
+   private String buildTicketTable(final List<Ticket> ticketsToDisplay) 
+   {
+       if (ticketsToDisplay.isEmpty()) {
+           return (
+               "No Tickets" + 
+                System.lineSeparator() + 
+                System.lineSeparator() + 
+                buildDashes(interfaceDash, interfaceWidth)
+           );
+       }
+       final List<String> lines = new ArrayList<>();
+       final Map<String,Integer> headers = new LinkedHashMap<>();
+       headers.put("ID", 5);
+       headers.put("Username", 8);
+       headers.put("F. Name", 7);
+       headers.put("L. Name", 7);
+       headers.put("Status", 6);
+       headers.put("Sev.", 4);
+       headers.put("Sub. Date", 10);
+       headers.put("Desc.", 10);
+       final String header = String.join(" | ", 
+           headers.entrySet().stream().map(e -> padColumn(e.getKey(), e.getValue())).collect(Collectors.toList())
+       ) + " |";
+       lines.add(buildDashes(interfaceDash, header.length()));
+       lines.add(header);
+       lines.add(buildDashes(interfaceDash, header.length()));
+       final int numTickets = ticketsToDisplay.size();
+       for (int i = 0; i < numTickets; i++) {
+           final Ticket t = ticketsToDisplay.get(i);
+           final List<String> cols = new ArrayList<>();
+           cols.add(padColumn("-- " + String.valueOf(i + 1) + ".", headers.get("ID")));
+           cols.add(padColumn(t.getUserName(), headers.get("Username")));
+           cols.add(padColumn(t.getFirstName(), headers.get("F. Name")));
+           cols.add(padColumn(t.getLastName(), headers.get("L. Name")));
+           cols.add(padColumn(t.isOpen() ? "Open" : "Closed", headers.get("Status")));
+           cols.add(padColumn(t.getSeverity(), headers.get("Sev.")));
+           cols.add(padColumn(t.getSubmissionDate(), headers.get("Sub. Date")));
+           cols.add(padColumn(t.getDescription(), headers.get("Desc.")));
+           lines.add(String.join(" | ", cols) + " |");
+       }
+       lines.add(buildDashes(interfaceDash, header.length()));
+       return String.join(System.lineSeparator(), lines);
+   }
+   
+   private String padColumn(final String string, final int width) {
+       final String s = (string.length() > width) ? string.substring(0, width) : string;
+       return String.format("%-" + width + "s", s);
    }
 
 }
