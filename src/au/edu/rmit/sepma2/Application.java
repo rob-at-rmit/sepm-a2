@@ -206,7 +206,9 @@ public class Application
                getStringInput("Contact Number (02777 4444): ", "^\\+?[0-9 ]{8,14}$");
       final Date submissionDate = getDateInput("Submission date (DD/MM/YYYY): ");
       final String description = getStringInput("Description: ");
-      final String severity = getStringInput("Severity (LOW/MED/HIGH): ", "^(LOW|MED|HIGH)$");
+      final Severity severity = Severity.valueOf(
+          getStringInput("Severity (LOW/MED/HIGH): ", "^(LOW|MED|HIGH)$").toUpperCase()
+      );
 
       final Ticket t = new Ticket(fName, lName, username, null, contactNum, submissionDate,
                             description, severity);
@@ -302,7 +304,7 @@ public class Application
      } while (selection != 0);
    }
 
-   private void changeSeverity(Ticket t)
+   private void changeSeverity(final Ticket t)
    {
       String selection;
 
@@ -313,25 +315,23 @@ public class Application
       System.out.println("HIGH");
 
       selection = getStringInput("Enter Selection: ");
-      if (selection.equalsIgnoreCase("LOW"))
+  
+      if (selection.equalsIgnoreCase(Severity.LOW.name()))
       {
-         t.setSeverity("LOW");
+         t.setSeverity(Severity.LOW);
       }
-      else if (selection.equalsIgnoreCase("MED"))
+      else if (selection.equalsIgnoreCase(Severity.MED.name()))
       {
-         t.setSeverity("MED");
+         t.setSeverity(Severity.MED);
       }
-      else if (selection.equalsIgnoreCase("HIGH"))
+      else if (selection.equalsIgnoreCase(Severity.HIGH.name()))
       {
-         t.setSeverity("HIGH");
+         t.setSeverity(Severity.HIGH);
       }
       else
       {
          System.out.println("Enter one of the above options");
       }
-      
-      System.out.println("Ticket " + t.hashCode() + " is now " + t.getSeverity());
-
    }
 
    /**
@@ -449,6 +449,11 @@ public class Application
       return s;
    }
 
+   /**
+    * Retrieve a date type from the command line using the default parse format.
+    * @param label
+    * @return
+    */
    private Date getDateInput(final String label)
    {
        do 
@@ -464,12 +469,23 @@ public class Application
        while (true);
    }
    
+   /**
+    * Parse a date from a string using the default date format.
+    * @param date
+    * @return
+    * @throws ParseException
+    */
    public static Date parseDate(final String date) throws ParseException {
        final SimpleDateFormat f = new SimpleDateFormat(DATE_FORMAT);
        f.setLenient(false);
        return f.parse(date);
    }
    
+   /**
+    * Format a date as a string using the default date format.
+    * @param date
+    * @return
+    */
    public static String formatDate(final Date date) {
        return new SimpleDateFormat(DATE_FORMAT).format(date);
    }
@@ -600,17 +616,17 @@ public class Application
       try 
       {
           tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", null, "0496323145", parseDate("07/07/2020"),
-                                 "This is just some test data 0.", "LOW"));
+                                 "This is just some test data 0.", Severity.LOW));
           tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", null, "0496323145", parseDate("07/10/2020"),
-                                 "This is just some test data 1.", "LOW"));
+                                 "This is just some test data 1.", Severity.LOW));
           tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", null, "0496323145", parseDate("04/10/2020"),
-                                 "This is just some test data 2.", "MED"));
+                                 "This is just some test data 2.", Severity.MED));
           tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", null, "0496323145", parseDate("05/10/2020"),
-                                 "This is just some test data 3.", "MED"));
+                                 "This is just some test data 3.", Severity.MED));
           tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", null, "0496323145", parseDate("06/10/2020"),
-                                 "This is just some test data 4.", "HIGH"));
+                                 "This is just some test data 4.", Severity.HIGH));
           tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", null, "0496323145", parseDate("08/10/2020"),
-                                 "This is just some test data 5.", "HIGH"));
+                                 "This is just some test data 5.", Severity.HIGH));
       }
       catch (final ParseException e)
       {
@@ -696,7 +712,7 @@ public class Application
            cols.add(padColumn(t.getFirstName(), headers.get("F. Name")));
            cols.add(padColumn(t.getLastName(), headers.get("L. Name")));
            cols.add(padColumn(t.isOpen() ? "Open" : "Closed", headers.get("Status")));
-           cols.add(padColumn(t.getSeverity(), headers.get("Sev.")));
+           cols.add(padColumn(t.getSeverity().toString(), headers.get("Sev.")));
            cols.add(padColumn(t.getSubmissionDateFormatted(), headers.get("Sub. Date")));
            cols.add(padColumn(t.getDescription(), headers.get("Desc.")));
            lines.add(String.join(" | ", cols) + " |");
@@ -715,6 +731,11 @@ public class Application
 enum Role
 {
    STAFF, TECHNICIAN_LEVEL1, TECHNICIAN_LEVEL2;
+}
+
+enum Severity
+{
+    LOW, MED, HIGH 
 }
 
 /**
@@ -787,7 +808,7 @@ class Ticket
    private final Date submissionDate;
    private final String description;
    private boolean open;
-   private String severity;
+   private Severity severity;
 
    public Ticket(final String firstName, 
                  final String lastName, 
@@ -796,7 +817,7 @@ class Ticket
                  final String contactNumber, 
                  final Date submissionDate, 
                  final String description,
-                 final String severity)
+                 final Severity severity)
    {
       this.firstName = firstName;
       this.lastName = lastName;
@@ -817,12 +838,12 @@ class Ticket
        this.open = open;
    }
 
-   public void setSeverity(String severity)
+   public void setSeverity(Severity severity)
    {
       this.severity = severity;
    }
 
-   public String getSeverity()
+   public Severity getSeverity()
    {
       return severity;
    }
