@@ -258,6 +258,10 @@ public class Application
       }
    }
 
+   /**
+    * My tickets shows any open tickets which the current user either submitted or has assigned 
+    * to them.
+    */
    private void showOpenTickets(){
        int selection;
        do
@@ -265,11 +269,15 @@ public class Application
            final List<Ticket> myOpenTickets = new ArrayList<>();
            for (final Ticket ticket : tickets)
            {
-               if (ticket.getSubmitterUserName().equalsIgnoreCase(currentUser.getUsername()) && ticket.isOpen())
+               if (ticket.isOpen() && (
+                       currentUser.getUsername().equals(ticket.getSubmitterUserName()) ||
+                       currentUser.getUsername().equals(ticket.getAssigneeUserName())
+                   ))
                {
                    myOpenTickets.add(ticket);
                }
            }
+           
            System.out.println(buildMenu(interfaceDash, interfaceWidth, "My Open Tickets"));
            System.out.println(buildTicketTable(myOpenTickets));
            final Integer allowable[] = IntStream.rangeClosed(0, myOpenTickets.size()).boxed().toArray(Integer[]::new);
@@ -354,7 +362,7 @@ public class Application
       User user;
       do
       {
-         id = getStringInput("ID: ");
+         id = getStringInput("Username: ");
          user = findUserByID(id);
          exists = id
                   .equalsIgnoreCase(Objects.isNull(user) ? "" : user.getUsername());
@@ -615,17 +623,17 @@ public class Application
 
       try 
       {
-          tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", null, "0496323145", parseDate("07/07/2020"),
+          tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", "hstyles", "0496323145", parseDate("07/07/2020"),
                                  "This is just some test data 0.", Severity.LOW));
-          tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", null, "0496323145", parseDate("07/10/2020"),
+          tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", "nhoran", "0496323145", parseDate("07/10/2020"),
                                  "This is just some test data 1.", Severity.LOW));
-          tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", null, "0496323145", parseDate("04/10/2020"),
+          tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", "lpayne", "0496323145", parseDate("04/10/2020"),
                                  "This is just some test data 2.", Severity.MED));
-          tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", null, "0496323145", parseDate("05/10/2020"),
+          tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", "lpayne", "0496323145", parseDate("05/10/2020"),
                                  "This is just some test data 3.", Severity.MED));
-          tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", null, "0496323145", parseDate("06/10/2020"),
+          tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", "ltomlinson", "0496323145", parseDate("06/10/2020"),
                                  "This is just some test data 4.", Severity.HIGH));
-          tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", null, "0496323145", parseDate("08/10/2020"),
+          tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", "zmalik", "0496323145", parseDate("08/10/2020"),
                                  "This is just some test data 5.", Severity.HIGH));
       }
       catch (final ParseException e)
@@ -844,6 +852,11 @@ class Ticket
    {
        this.open = false;
        this.resolutionDate = new Date();
+   }
+   
+   public Date getResolutionDate()
+   {
+       return resolutionDate;
    }
 
    public void setSeverity(Severity severity)
