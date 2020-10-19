@@ -1,7 +1,10 @@
 package au.edu.rmit.sepma2;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,6 +37,8 @@ public class Application
    private final int interfaceWidth = 80;
    private final String interfaceDash = "-";
    private final String lD = interfaceDash + interfaceDash; // leading Dash
+   
+   private final static String DATE_FORMAT = "dd/MM/yyyy";
 
    /**
     * Main entry point for the IT ticketing system.
@@ -167,8 +172,6 @@ public class Application
 
    }
 
-
-
    /**
     * Form to create a ticket
     */
@@ -199,20 +202,15 @@ public class Application
          }
       } while (!exists);
 
-      String contactNum =
+      final String contactNum =
                getStringInput("Contact Number (02777 4444): ", "^\\+?[0-9 ]{8,14}$");
+      final Date submissionDate = getDateInput("Submission date (DD/MM/YYYY): ");
+      final String description = getStringInput("Description: ");
+      final String severity = getStringInput("Severity (LOW/MED/HIGH): ", "^(LOW|MED|HIGH)$");
 
-      String submissionDate = getStringInput("Submission date (YYYY/MM/DD): ",
-                                             "^[0-9]{4}/[0-9]{2}/[0-9]{2}$");
-
-      String description = getStringInput("Description: ");
-
-      String severity =
-               getStringInput("Severity (LOW/MED/HIGH): ", "^(LOW|MED|HIGH)$");
-
-      Ticket t = new Ticket(fName, lName, username, contactNum, submissionDate,
+      final Ticket t = new Ticket(fName, lName, username, null, contactNum, submissionDate,
                             description, severity);
-      t.setIsOpen(true);
+      t.setOpen(true);
       if (tickets.add(t))
       {
          printAlert("New Open Ticket has been added to the system.");
@@ -230,9 +228,8 @@ public class Application
                                  "IT Ticketing System",
                                  "Ticket"));
       System.out.println(buildDashes(interfaceDash, interfaceWidth));
-
       System.out.println("  "+t.getFirstName() + " " + t.getLastName() + " (" +
-                         t.getUserName() + ")");
+                         t.getSubmitterUserName() + ")");
       System.out.println("  Phone: " + t.getContactNumber());
       System.out.println("  Ticket Submitted: " + t.getSubmissionDate());
       System.out.println("  Ticket Description: \n" + t.getDescription());
@@ -254,7 +251,7 @@ public class Application
              changeSeverity(t);
              break;
          case 3:
-             t.setIsOpen(false);
+             t.setOpen(false);
              break;
       }
    }
@@ -266,7 +263,7 @@ public class Application
            final List<Ticket> myOpenTickets = new ArrayList<>();
            for (final Ticket ticket : tickets)
            {
-               if (ticket.getUserName().equalsIgnoreCase(currentUser.getUsername()) && ticket.isOpen())
+               if (ticket.getSubmitterUserName().equalsIgnoreCase(currentUser.getUsername()) && ticket.isOpen())
                {
                    myOpenTickets.add(ticket);
                }
@@ -452,6 +449,31 @@ public class Application
       return s;
    }
 
+   private Date getDateInput(final String label)
+   {
+       do 
+       {
+           final String input = getStringInput(label);
+           try {
+               return parseDate(input);
+           }
+           catch (final ParseException e) {
+               printErr("Please enter a date in the format " + DATE_FORMAT);
+           }
+       }
+       while (true);
+   }
+   
+   public static Date parseDate(final String date) throws ParseException {
+       final SimpleDateFormat f = new SimpleDateFormat(DATE_FORMAT);
+       f.setLenient(false);
+       return f.parse(date);
+   }
+   
+   public static String formatDate(final Date date) {
+       return new SimpleDateFormat(DATE_FORMAT).format(date);
+   }
+
    /**
     * Set the role
     * 
@@ -575,18 +597,25 @@ public class Application
       users.add(new User("bob", "pwd", "Bobby", "Bob-Bob",
                          Role.STAFF));
 
-      tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", "0496323145", "2020/7/7",
-                             "This is just some test data 0.", "LOW"));
-      tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", "0496323145", "2020/10/7",
-                             "This is just some test data 1.", "LOW"));
-      tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", "0496323145", "2020/10/4",
-                             "This is just some test data 2.", "MED"));
-      tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", "0496323145", "2020/10/5",
-                             "This is just some test data 3.", "MED"));
-      tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", "0496323145", "2020/10/6",
-                             "This is just some test data 4.", "HIGH"));
-      tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", "0496323145", "2020/10/8",
-                             "This is just some test data 5.", "HIGH"));
+      try 
+      {
+          tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", null, "0496323145", parseDate("07/07/2020"),
+                                 "This is just some test data 0.", "LOW"));
+          tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", null, "0496323145", parseDate("07/10/2020"),
+                                 "This is just some test data 1.", "LOW"));
+          tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", null, "0496323145", parseDate("04/10/2020"),
+                                 "This is just some test data 2.", "MED"));
+          tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", null, "0496323145", parseDate("05/10/2020"),
+                                 "This is just some test data 3.", "MED"));
+          tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", null, "0496323145", parseDate("06/10/2020"),
+                                 "This is just some test data 4.", "HIGH"));
+          tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", null, "0496323145", parseDate("08/10/2020"),
+                                 "This is just some test data 5.", "HIGH"));
+      }
+      catch (final ParseException e)
+      {
+          throw new RuntimeException("Error parsing date in initial data setup");
+      }
    }
 
    /**
@@ -645,7 +674,7 @@ public class Application
        final List<String> lines = new ArrayList<>();
        final Map<String,Integer> headers = new LinkedHashMap<>();
        headers.put("ID", 5);
-       headers.put("Username", 8);
+       headers.put("Submitter", 8);
        headers.put("F. Name", 7);
        headers.put("L. Name", 7);
        headers.put("Status", 6);
@@ -663,12 +692,12 @@ public class Application
            final Ticket t = ticketsToDisplay.get(i);
            final List<String> cols = new ArrayList<>();
            cols.add(padColumn("-- " + String.valueOf(i + 1) + ".", headers.get("ID")));
-           cols.add(padColumn(t.getUserName(), headers.get("Username")));
+           cols.add(padColumn(t.getSubmitterUserName(), headers.get("Submitter")));
            cols.add(padColumn(t.getFirstName(), headers.get("F. Name")));
            cols.add(padColumn(t.getLastName(), headers.get("L. Name")));
            cols.add(padColumn(t.isOpen() ? "Open" : "Closed", headers.get("Status")));
            cols.add(padColumn(t.getSeverity(), headers.get("Sev.")));
-           cols.add(padColumn(t.getSubmissionDate(), headers.get("Sub. Date")));
+           cols.add(padColumn(t.getSubmissionDateFormatted(), headers.get("Sub. Date")));
            cols.add(padColumn(t.getDescription(), headers.get("Desc.")));
            lines.add(String.join(" | ", cols) + " |");
        }
@@ -752,36 +781,40 @@ class Ticket
 
    private final String firstName;
    private final String lastName;
-   private final String username; // username
+   private final String submitterUserName;
+   private final String assigneeUserName;
    private final String contactNumber;
-   private final String submissionDate;
+   private final Date submissionDate;
    private final String description;
-   private boolean isOpen; // status
+   private boolean open;
    private String severity;
 
-   // Fill in the ticket
-   public Ticket(String firstName, String lastName, String id,
-                 String contactNumber, String submissionDate, String description,
-                 String severity)
+   public Ticket(final String firstName, 
+                 final String lastName, 
+                 final String submitterUserName,
+                 final String assigneeUsername,
+                 final String contactNumber, 
+                 final Date submissionDate, 
+                 final String description,
+                 final String severity)
    {
       this.firstName = firstName;
       this.lastName = lastName;
-      this.username = id; // username
+      this.submitterUserName = submitterUserName;
+      this.assigneeUserName = assigneeUsername;
       this.contactNumber = contactNumber;
       this.submissionDate = submissionDate;
       this.description = description;
       this.severity = severity;
-      this.isOpen = false;
    }
 
    public boolean isOpen()
    {
-      return isOpen;
+      return open;
    }
-
-   public void setIsOpen(boolean isOpen)
-   {
-      this.isOpen = isOpen;
+   
+   public void setOpen(final boolean open) {
+       this.open = open;
    }
 
    public void setSeverity(String severity)
@@ -804,9 +837,14 @@ class Ticket
       return lastName;
    }
 
-   public String getUserName()
+   public String getSubmitterUserName()
    {
-      return username;
+      return submitterUserName;
+   }
+   
+   public String getAssigneeUserName() 
+   {
+       return assigneeUserName;
    }
 
    public String getContactNumber()
@@ -814,9 +852,13 @@ class Ticket
       return contactNumber;
    }
 
-   public String getSubmissionDate()
+   public Date getSubmissionDate()
    {
       return submissionDate;
+   }
+   
+   public String getSubmissionDateFormatted() {
+       return Application.formatDate(submissionDate);
    }
 
    public String getDescription()
