@@ -212,7 +212,7 @@ public class Application
 
       final Ticket t = new Ticket(fName, lName, username, null, contactNum, submissionDate,
                             description, severity);
-      t.setOpen(true);
+      t.open();
       if (tickets.add(t))
       {
          printAlert("New Open Ticket has been added to the system.");
@@ -253,7 +253,7 @@ public class Application
              changeSeverity(t);
              break;
          case 3:
-             t.setOpen(false);
+             t.close();
              break;
       }
    }
@@ -809,6 +809,7 @@ class Ticket
    private final String description;
    private boolean open;
    private Severity severity;
+   private Date resolutionDate;
 
    public Ticket(final String firstName, 
                  final String lastName, 
@@ -834,8 +835,15 @@ class Ticket
       return open;
    }
    
-   public void setOpen(final boolean open) {
-       this.open = open;
+   public void open()
+   {
+       this.open = true;
+   }
+   
+   public void close()
+   {
+       this.open = false;
+       this.resolutionDate = new Date();
    }
 
    public void setSeverity(Severity severity)
