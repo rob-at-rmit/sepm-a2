@@ -4,12 +4,15 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -31,6 +34,7 @@ public class Application
 
    private Scanner scanner = new Scanner(System.in);
 
+   private final Random random = new Random();
    private Set<User> users = new HashSet<>();
    private List<Ticket> tickets = new ArrayList<>();
    private User currentUser = null;
@@ -39,6 +43,7 @@ public class Application
    private final String lD = interfaceDash + interfaceDash; // leading Dash
    
    private final static String DATE_FORMAT = "dd/MM/yyyy";
+   private final static boolean DEBUG_OUTPUT = true;
 
    /**
     * Main entry point for the IT ticketing system.
@@ -192,7 +197,7 @@ public class Application
       User user;
       do
       {
-         username = getStringInput("Username : ");
+         username = getStringInput("Username: ");
          user = findUserByID(username);
          exists = username
                   .equalsIgnoreCase(Objects.isNull(user) ? "" : user.getUsername());
@@ -209,9 +214,10 @@ public class Application
       final Severity severity = Severity.valueOf(
           getStringInput("Severity (LOW/MED/HIGH): ", "^(LOW|MED|HIGH)$").toUpperCase()
       );
-
-      final Ticket t = new Ticket(fName, lName, username, null, contactNum, submissionDate,
-                            description, severity);
+      
+      final String assignee = findAssigneeUserName(severity);
+      final Ticket t = new Ticket(fName, lName, username, assignee, 
+                                  contactNum, submissionDate, description, severity);
       t.open();
       if (tickets.add(t))
       {
@@ -233,7 +239,7 @@ public class Application
       System.out.println("  "+t.getFirstName() + " " + t.getLastName() + " (" +
                          t.getSubmitterUserName() + ")");
       System.out.println("  Phone: " + t.getContactNumber());
-      System.out.println("  Ticket Submitted: " + t.getSubmissionDate());
+      System.out.println("  Ticket Submitted: " + formatDate(t.getSubmissionDate()));
       System.out.println("  Ticket Description: \n" + t.getDescription());
       System.out.println();
       System.out.println("  Severity: " + t.getSeverity());
@@ -310,6 +316,112 @@ public class Application
        selection = getIntInput("Type \"0\" to return to admin: ", 0);
        System.out.println();
      } while (selection != 0);
+   }
+   
+   /**
+    * Using the specified severity, finds the appropriate assignee username.
+    * @param severity The severity of the ticket.
+    * @return the username of the assignee this ticket should be assigned to. 
+    */
+   private String findAssigneeUserName(final Severity severity) 
+   {
+       debugLog("Finding username for severity " + severity);
+       final Role targetRole = (
+            severity.equals(Severity.HIGH) ? Role.TECHNICIAN_LEVEL2 : Role.TECHNICIAN_LEVEL1
+       );
+
+       debugLog("Target role is " + targetRole);
+       final Map<User,Long> candidates = countOpenTicketsInRole(targetRole);
+       
+       /*
+        * If all counts of the candidate users are zero, we do a random allocation.
+        */
+       final User assignee;
+       final Long firstCount = candidates.values().stream().findAny().get();
+       if (candidates.values().stream().allMatch(count -> count == firstCount))
+       {
+           debugLog("All users have " + firstCount + " open tickets, randomising");
+           assignee = getRandomUser(new ArrayList<>(candidates.keySet()));
+       }
+       else 
+       {
+           debugLog("Finding user with least open tickets");
+           assignee = getUserWithLeastTickets(candidates);
+       }
+   
+       debugLog("Assigned user " + assignee.getUsername());
+       return assignee.getUsername();
+   }
+   
+   /**
+    * Returns a user at a random index from the given list of users.
+    * @param values
+    * @return
+    */
+   private User getRandomUser(final List<User> values)
+   {
+       return values.get(random.nextInt(values.size()));
+   }
+   
+   /**
+    * Returns the user with the least number of tickets.
+    * @param userTicketMap
+    * @return
+    */
+   private User getUserWithLeastTickets(final Map<User,Long> userTicketMap)
+   {
+       return (
+            userTicketMap
+                .entrySet()
+                .stream()
+                .sorted(Comparator.comparing(Entry::getValue))
+                .findFirst()
+                .get()
+                .getKey()
+       );
+   }
+
+   /**
+    * Returns the set of users who are in a particular role.
+    * @param role
+    * @return
+    */
+   private Set<User> getUsersInRole(final Role role)
+   {
+       return users.stream().filter(u -> role.equals(u.getRole())).collect(Collectors.toSet());
+   }
+
+   /**
+    * Counts the number of open tickets for each user in a given role.
+    * @param role
+    * @return
+    */
+   private Map<User,Long> countOpenTicketsInRole(final Role role) 
+   {
+       final Map<User,Long> result = (
+            getUsersInRole(role).stream().collect(
+                Collectors.toMap(u -> u, this::countOpenTicketsByAssigneeUser)
+            )
+       );
+       result.forEach((u, c) -> {
+           debugLog("User with username " + u.getUsername() + " has " + c + " open tickets.");
+       });
+       return result;
+   }
+
+   /**
+    * Counts the number of open tickets that are assigned to the specified username.
+    * @param assigneeUserName
+    * @return
+    */
+   private long countOpenTicketsByAssigneeUser(final User assignee)
+   {
+       return (
+            tickets
+            .stream()
+            .filter(t -> assignee.getUsername().equalsIgnoreCase(t.getAssigneeUserName()))
+            .count()
+       );
    }
 
    private void changeSeverity(final Ticket t)
@@ -698,13 +810,13 @@ public class Application
        final List<String> lines = new ArrayList<>();
        final Map<String,Integer> headers = new LinkedHashMap<>();
        headers.put("ID", 5);
-       headers.put("Submitter", 8);
-       headers.put("F. Name", 7);
-       headers.put("L. Name", 7);
+       headers.put("Submit.", 8);
+       headers.put("Assignee", 8);
+       headers.put("Name", 8);
        headers.put("Status", 6);
        headers.put("Sev.", 4);
        headers.put("Sub. Date", 10);
-       headers.put("Desc.", 10);
+       headers.put("Desc.", 8);
        final String header = String.join(" | ", 
            headers.entrySet().stream().map(e -> padColumn(e.getKey(), e.getValue())).collect(Collectors.toList())
        ) + " |";
@@ -716,9 +828,9 @@ public class Application
            final Ticket t = ticketsToDisplay.get(i);
            final List<String> cols = new ArrayList<>();
            cols.add(padColumn("-- " + String.valueOf(i + 1) + ".", headers.get("ID")));
-           cols.add(padColumn(t.getSubmitterUserName(), headers.get("Submitter")));
-           cols.add(padColumn(t.getFirstName(), headers.get("F. Name")));
-           cols.add(padColumn(t.getLastName(), headers.get("L. Name")));
+           cols.add(padColumn(t.getSubmitterUserName(), headers.get("Submit.")));
+           cols.add(padColumn(t.getAssigneeUserName(), headers.get("Assignee")));
+           cols.add(padColumn(t.getFullName(), headers.get("Name")));
            cols.add(padColumn(t.isOpen() ? "Open" : "Closed", headers.get("Status")));
            cols.add(padColumn(t.getSeverity().toString(), headers.get("Sev.")));
            cols.add(padColumn(t.getSubmissionDateFormatted(), headers.get("Sub. Date")));
@@ -732,6 +844,14 @@ public class Application
    private String padColumn(final String string, final int width) {
        final String s = (string.length() > width) ? string.substring(0, width) : string;
        return String.format("%-" + width + "s", s);
+   }
+   
+   private static void debugLog(final String message) 
+   {
+       if (DEBUG_OUTPUT) 
+       {
+           System.out.println("[DEBUG] " + message);
+       }
    }
 
 }
@@ -877,6 +997,11 @@ class Ticket
    public String getLastName()
    {
       return lastName;
+   }
+   
+   public String getFullName() 
+   {
+       return firstName + " " + lastName;
    }
 
    public String getSubmitterUserName()
