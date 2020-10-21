@@ -377,6 +377,9 @@ public class Application
        System.out.print(buildMenu(interfaceDash, interfaceWidth, "Closed Tickets " + range));
        System.out.println(buildClosedTicketReportTable(closedTickets));
        System.out.println(buildDashes(interfaceDash, interfaceWidth));
+       System.out.print(buildMenu(interfaceDash, interfaceWidth, "Open Tickets " + range));
+       System.out.println(buildOpenTicketReportTable(closedTickets));
+       System.out.println(buildDashes(interfaceDash, interfaceWidth));
        
        int selection;
        do
@@ -944,6 +947,21 @@ public class Application
        }
        lines.add(buildDashes(interfaceDash, header.length()));
        return String.join(System.lineSeparator(), lines);
+   }
+   
+   private String buildOpenTicketReportTable(final List<Ticket> openTickets)
+   {
+       final Map<String,Integer> headers = new LinkedHashMap<>();
+       headers.put("Submitter", 14);
+       headers.put("Submission Date", 16);
+       headers.put("Severity", 42);
+       return buildTicketTable(openTickets, headers, (t, i) -> {
+           final List<String> cols = new ArrayList<>();
+           cols.add(padColumn(t.getSubmitterUserName(), headers.get("Submitter")));
+           cols.add(padColumn(formatDate(t.getSubmissionDate()), headers.get("Submission Date")));
+           cols.add(padColumn(t.getSeverity().toString(), headers.get("Severity")));
+           return cols;
+       });
    }
    
    private String buildClosedTicketReportTable(final List<Ticket> closedTickets)
