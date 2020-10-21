@@ -2,6 +2,8 @@ package au.edu.rmit.sepma2;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -15,6 +17,7 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -138,7 +141,7 @@ public class Application
    private void staffloginArea()
    {
       int selection, i = 0, j = 5;
-      List<Integer> allowedMenuItems = new ArrayList<>(Arrays.asList(1, 2, 3, 4));
+      List<Integer> allowedMenuItems = new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5));
       List<Ticket> myTickets = new ArrayList<>();
 
       // get tickets
@@ -154,7 +157,8 @@ public class Application
          System.out.println(lD+" 1. Create a New Ticket");
          System.out.println(lD+" 2. Show My Open Tickets");
          System.out.println(lD+" 3. Show Closed Tickets");
-         System.out.println(lD+" 4. Logout");
+         System.out.println(lD+" 4. Show Ticket Report");
+         System.out.println(lD+" 5. Logout");
          System.out.println(buildDashes(interfaceDash, interfaceWidth));
          selection = getIntInput("Your Selection: ", allowedMenuItems.toArray(new Integer[0]));
          System.out.println();
@@ -170,10 +174,12 @@ public class Application
                showClosedTickets();
                break;
             case 4:
+               handleTicketReport();
+            case 5:
                // logout
                break;
          }
-      } while (selection != 4);
+      } while (selection != 5);
 
    }
 
@@ -316,6 +322,96 @@ public class Application
        selection = getIntInput("Type \"0\" to return to admin: ", 0);
        System.out.println();
      } while (selection != 0);
+   }
+   
+   /**
+    * Handle the input parameters of the ticket report.
+    */
+   private void handleTicketReport()
+   {
+       do 
+       {
+           System.out.println(buildDashes(interfaceDash, interfaceWidth));
+           System.out.print(buildMenu(interfaceDash, interfaceWidth, "Ticket Report"));
+           System.out.println(buildDashes(interfaceDash, interfaceWidth));
+           final Date reportStart = getDateInput("Report start period (DD/MM/YYYY): ");
+           final Date reportEnd = getDateInput("Report end period (DD/MM/YYYY): ");
+           if (reportStart.after(reportEnd))
+           {
+               printErr("Report start date " + formatDate(reportStart) + 
+                        " must be before report end date " + formatDate(reportEnd));
+           }
+           else
+           {
+               showTicketReport(reportStart, reportEnd);
+               return;
+           }
+       }
+       while (true);
+   }
+   
+   /**
+    * Display the details of the ticket report between the two specified dates.
+    * @param reportStart
+    * @param reportEnd
+    */
+   private void showTicketReport(final Date start, final Date end)
+   {
+       final String range = formatDate(start) + " - " + formatDate(end);
+       final List<Ticket> allTickets =  getTicketsSubmittedInPeriod(start, end);
+       final Map<Boolean,List<Ticket>> openClosedMap = (
+            allTickets.stream().collect(Collectors.partitioningBy(t -> t.isOpen()))
+       );
+       final List<Ticket> openTickets = openClosedMap.get(true);
+       final List<Ticket> closedTickets = openClosedMap.get(false);
+       
+       System.out.println(buildDashes(interfaceDash, interfaceWidth));
+       System.out.print(buildMenu(interfaceDash, interfaceWidth, "Ticket Report " + range));
+       System.out.println(buildDashes(interfaceDash, interfaceWidth));
+       System.out.println(
+           "Total tickets: " + allTickets.size() + "           " +
+           "Open tickets: " + openTickets.size() + "           " +
+           "Closed tickets: " + closedTickets.size()
+       );
+       System.out.println(buildDashes(interfaceDash, interfaceWidth));
+       System.out.print(buildMenu(interfaceDash, interfaceWidth, "Closed Tickets " + range));
+       System.out.println(buildClosedTicketReportTable(closedTickets));
+       System.out.println(buildDashes(interfaceDash, interfaceWidth));
+       
+       int selection;
+       do
+       {
+         selection = getIntInput("Type \"0\" to return to admin: ", 0);
+         System.out.println();
+       } 
+       while (selection != 0);
+   }
+
+   /**
+    * Return the list of tickets submitted within the specified range.
+    */
+   private List<Ticket> getTicketsSubmittedInPeriod(final Date start, final Date end)
+   {
+       return (
+            tickets
+            .stream()
+            .filter(t -> isDateInRange(t.getSubmissionDate(), start, end))
+            .collect(Collectors.toList())
+       );
+   }
+   
+   /**
+    * Determines whether the specified date is within the specified start/end date range inclusive.
+    * @param date Date to test
+    * @param start Start date of the range
+    * @param end End date of the range
+    * @return true if date is within (inclusive) the start and end date range.
+    */
+   private boolean isDateInRange(final Date date, final Date start, final Date end)
+   {
+       return (
+            date.equals(start) || date.equals(end) || (date.after(start) && date.before(end))
+       );
    }
    
    /**
@@ -736,17 +832,17 @@ public class Application
       try 
       {
           tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", "hstyles", "0496323145", parseDate("07/07/2020"),
-                                 "This is just some test data 0.", Severity.LOW));
+                                 "This is just some test data 0.", Severity.LOW, false, parseDate("07/08/2020")));
           tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", "nhoran", "0496323145", parseDate("07/10/2020"),
-                                 "This is just some test data 1.", Severity.LOW));
+                                 "This is just some test data 1.", Severity.LOW, false, parseDate("08/10/2020")));
           tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", "lpayne", "0496323145", parseDate("04/10/2020"),
-                                 "This is just some test data 2.", Severity.MED));
+                                 "This is just some test data 2.", Severity.MED, false, parseDate("11/10/2020")));
           tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", "lpayne", "0496323145", parseDate("05/10/2020"),
-                                 "This is just some test data 3.", Severity.MED));
+                                 "This is just some test data 3.", Severity.MED, false, parseDate("10/10/2020")));
           tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", "ltomlinson", "0496323145", parseDate("06/10/2020"),
-                                 "This is just some test data 4.", Severity.HIGH));
+                                 "This is just some test data 4.", Severity.HIGH, false, parseDate("07/10/2020")));
           tickets.add(new Ticket("Bobby", "Bob-Bob", "bob", "zmalik", "0496323145", parseDate("08/10/2020"),
-                                 "This is just some test data 5.", Severity.HIGH));
+                                 "This is just some test data 5.", Severity.HIGH, false, parseDate("09/10/2020")));
       }
       catch (final ParseException e)
       {
@@ -795,9 +891,35 @@ public class Application
       }
       return s;
    }
-   
-   
+
    private String buildTicketTable(final List<Ticket> ticketsToDisplay) 
+   {
+       final Map<String,Integer> headers = new LinkedHashMap<>();
+       headers.put("ID", 5);
+       headers.put("Submit.", 8);
+       headers.put("Assignee", 8);
+       headers.put("Name", 8);
+       headers.put("Status", 6);
+       headers.put("Sev.", 4);
+       headers.put("Sub. Date", 10);
+       headers.put("Desc.", 8);
+       return buildTicketTable(ticketsToDisplay, headers, (t, i) -> {
+           final List<String> cols = new ArrayList<>();
+           cols.add(padColumn("-- " + String.valueOf(i + 1) + ".", headers.get("ID")));
+           cols.add(padColumn(t.getSubmitterUserName(), headers.get("Submit.")));
+           cols.add(padColumn(t.getAssigneeUserName(), headers.get("Assignee")));
+           cols.add(padColumn(t.getFullName(), headers.get("Name")));
+           cols.add(padColumn(t.isOpen() ? "Open" : "Closed", headers.get("Status")));
+           cols.add(padColumn(t.getSeverity().toString(), headers.get("Sev.")));
+           cols.add(padColumn(formatDate(t.getSubmissionDate()), headers.get("Sub. Date")));
+           cols.add(padColumn(t.getDescription(), headers.get("Desc.")));
+           return cols;
+       });
+   }
+   
+   private String buildTicketTable(final List<Ticket> ticketsToDisplay,
+                                   final Map<String,Integer> headers,
+                                   final BiFunction<Ticket,Integer,List<String>> columnMapper)
    {
        if (ticketsToDisplay.isEmpty()) {
            return (
@@ -808,15 +930,6 @@ public class Application
            );
        }
        final List<String> lines = new ArrayList<>();
-       final Map<String,Integer> headers = new LinkedHashMap<>();
-       headers.put("ID", 5);
-       headers.put("Submit.", 8);
-       headers.put("Assignee", 8);
-       headers.put("Name", 8);
-       headers.put("Status", 6);
-       headers.put("Sev.", 4);
-       headers.put("Sub. Date", 10);
-       headers.put("Desc.", 8);
        final String header = String.join(" | ", 
            headers.entrySet().stream().map(e -> padColumn(e.getKey(), e.getValue())).collect(Collectors.toList())
        ) + " |";
@@ -826,19 +939,31 @@ public class Application
        final int numTickets = ticketsToDisplay.size();
        for (int i = 0; i < numTickets; i++) {
            final Ticket t = ticketsToDisplay.get(i);
-           final List<String> cols = new ArrayList<>();
-           cols.add(padColumn("-- " + String.valueOf(i + 1) + ".", headers.get("ID")));
-           cols.add(padColumn(t.getSubmitterUserName(), headers.get("Submit.")));
-           cols.add(padColumn(t.getAssigneeUserName(), headers.get("Assignee")));
-           cols.add(padColumn(t.getFullName(), headers.get("Name")));
-           cols.add(padColumn(t.isOpen() ? "Open" : "Closed", headers.get("Status")));
-           cols.add(padColumn(t.getSeverity().toString(), headers.get("Sev.")));
-           cols.add(padColumn(t.getSubmissionDateFormatted(), headers.get("Sub. Date")));
-           cols.add(padColumn(t.getDescription(), headers.get("Desc.")));
+           final List<String> cols = columnMapper.apply(t, i);
            lines.add(String.join(" | ", cols) + " |");
        }
        lines.add(buildDashes(interfaceDash, header.length()));
        return String.join(System.lineSeparator(), lines);
+   }
+   
+   private String buildClosedTicketReportTable(final List<Ticket> closedTickets)
+   {
+       final Map<String,Integer> headers = new LinkedHashMap<>();
+       headers.put("Submitter", 14);
+       headers.put("Submission Date", 16);
+       headers.put("Assignee", 14);
+       headers.put("Time To Resolution (Days)", 25);
+       return buildTicketTable(closedTickets, headers, (t, i) -> {
+           final List<String> cols = new ArrayList<>();
+           cols.add(padColumn(t.getSubmitterUserName(), headers.get("Submitter")));
+           cols.add(padColumn(formatDate(t.getSubmissionDate()), headers.get("Submission Date")));
+           cols.add(padColumn(t.getAssigneeUserName(), headers.get("Assignee")));
+           cols.add(padColumn(
+               String.valueOf(t.getTimeToResolutionInDays()), 
+               headers.get("Time To Resolution (Days)"))
+           );
+           return cols;
+       });
    }
    
    private String padColumn(final String string, final int width) {
@@ -942,7 +1067,7 @@ class Ticket
    public Ticket(final String firstName, 
                  final String lastName, 
                  final String submitterUserName,
-                 final String assigneeUsername,
+                 final String assigneeUserName,
                  final String contactNumber, 
                  final Date submissionDate, 
                  final String description,
@@ -951,12 +1076,37 @@ class Ticket
       this.firstName = firstName;
       this.lastName = lastName;
       this.submitterUserName = submitterUserName;
-      this.assigneeUserName = assigneeUsername;
+      this.assigneeUserName = assigneeUserName;
       this.contactNumber = contactNumber;
       this.submissionDate = submissionDate;
       this.description = description;
       this.severity = severity;
    }
+   
+   public Ticket(final String firstName, 
+           final String lastName, 
+           final String submitterUserName,
+           final String assigneeUserName,
+           final String contactNumber, 
+           final Date submissionDate, 
+           final String description,
+           final Severity severity,
+           final boolean open,
+           final Date resolutionDate)
+    {
+        this(
+            firstName,
+            lastName,
+            submitterUserName,
+            assigneeUserName,
+            contactNumber,
+            submissionDate,
+            description,
+            severity
+        );
+        this.open = open;
+        this.resolutionDate = resolutionDate;
+    }
 
    public boolean isOpen()
    {
@@ -1024,8 +1174,13 @@ class Ticket
       return submissionDate;
    }
    
-   public String getSubmissionDateFormatted() {
-       return Application.formatDate(submissionDate);
+   public Long getTimeToResolutionInDays()
+   {    
+       if (resolutionDate != null && submissionDate != null) 
+       {
+           return ChronoUnit.DAYS.between(submissionDate.toInstant(), resolutionDate.toInstant());    
+       }
+       return 0L;
    }
 
    public String getDescription()
