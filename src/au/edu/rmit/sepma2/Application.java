@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -121,7 +122,7 @@ public class Application
          if (user.getPassword().equals(getStringInput("Password: ")))
          {
             currentUser = user;
-            staffloginArea();
+            showUserMenu();
          }
          else
          {
@@ -135,18 +136,39 @@ public class Application
    }
 
    /**
+    * Enum which represents the potential different main user menu options and associated labels.
+    * @author rob
+    */
+   private enum UserMenuOption
+   {
+       CREATE_TICKET("Create a New Ticket"),
+       SHOW_OPEN_TICKETS("Show My Open Tickets"),
+       SHOW_CLOSED_TICKETS("Show Closed Tickets"),
+       SHOW_TICKET_REPORT("Show Ticket Report"),
+       LOGOUT("Logout");
+       
+       private final String label;
+       
+       private UserMenuOption(final String label) 
+       {
+           this.label = label;
+       }
+       
+       private String getLabel()
+       {
+           return label;
+       }
+       
+   }
+   
+   /**
     * Show the staff login area which is a form that includes their tickets and
     * ability to add a new one
     */
-   private void staffloginArea()
+   private void showUserMenu()
    {
-      int selection, i = 0, j = 5;
-      List<Integer> allowedMenuItems = new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5));
-      List<Ticket> myTickets = new ArrayList<>();
-
-      // get tickets
-      // add numbers to allowed menu items
-
+      UserMenuOption selection;
+      final Map<Integer,UserMenuOption> availableMenuOptions = getUserMenuOptions();
       do
       {
          System.out.println(buildDashes(interfaceDash, interfaceWidth));
@@ -154,33 +176,54 @@ public class Application
                                     "IT Ticketing System",
                                     "Your Tickets - " + currentUser.getFirstName()));
          System.out.println(buildDashes(interfaceDash, interfaceWidth));
-         System.out.println(lD+" 1. Create a New Ticket");
-         System.out.println(lD+" 2. Show My Open Tickets");
-         System.out.println(lD+" 3. Show Closed Tickets");
-         System.out.println(lD+" 4. Show Ticket Report");
-         System.out.println(lD+" 5. Logout");
+         availableMenuOptions.forEach((i,l) -> System.out.println(lD + i + ". " + l.getLabel()));
          System.out.println(buildDashes(interfaceDash, interfaceWidth));
-         selection = getIntInput("Your Selection: ", allowedMenuItems.toArray(new Integer[0]));
+         selection = availableMenuOptions.get(
+             getIntInput("Your Selection: ", availableMenuOptions.keySet().toArray(new Integer[0]))
+         );
          System.out.println();
          switch (selection)
          {
-            case 1:
+            case CREATE_TICKET:
                createTicket();
                break;
-             case 2:
+             case SHOW_OPEN_TICKETS:
                showOpenTickets();
                break;
-            case 3:
+            case SHOW_CLOSED_TICKETS:
                showClosedTickets();
                break;
-            case 4:
+            case SHOW_TICKET_REPORT:
                handleTicketReport();
-            case 5:
+            case LOGOUT:
                // logout
                break;
          }
-      } while (selection != 5);
+      } while (!selection.equals(UserMenuOption.LOGOUT));
 
+   }
+   
+   /**
+    * Determines the appropriate user menu options based on role of current user.
+    * @return
+    */
+   private Map<Integer,UserMenuOption> getUserMenuOptions() 
+   {
+       final Map<Integer,UserMenuOption> options = new HashMap<>();
+       options.put(1, UserMenuOption.CREATE_TICKET);
+       options.put(2, UserMenuOption.SHOW_OPEN_TICKETS);
+       if (currentUser.getRole().equals(Role.STAFF))
+       {
+           options.put(3, UserMenuOption.SHOW_TICKET_REPORT);
+           options.put(4, UserMenuOption.LOGOUT);
+       }
+       else
+       {
+           options.put(3, UserMenuOption.SHOW_CLOSED_TICKETS);
+           options.put(4, UserMenuOption.SHOW_TICKET_REPORT);
+           options.put(5, UserMenuOption.LOGOUT);
+       }
+       return options;
    }
 
    /**
@@ -335,7 +378,6 @@ public class Application
            System.out.print(buildMenu(interfaceDash, interfaceWidth, "Ticket Report"));
            System.out.println(buildDashes(interfaceDash, interfaceWidth));
            final Date reportStart = getDateInput("Report start period (DD/MM/YYYY): ");
-           System.out.println("Report start? -> " + reportStart);
            final Date reportEnd = getDateInput("Report end period (DD/MM/YYYY): ");
            if (reportStart.after(reportEnd))
            {
@@ -379,7 +421,7 @@ public class Application
        System.out.println(buildClosedTicketReportTable(closedTickets));
        System.out.println(buildDashes(interfaceDash, interfaceWidth));
        System.out.print(buildMenu(interfaceDash, interfaceWidth, "Open Tickets " + range));
-       System.out.println(buildOpenTicketReportTable(closedTickets));
+       System.out.println(buildOpenTicketReportTable(openTickets));
        System.out.println(buildDashes(interfaceDash, interfaceWidth));
        
        int selection;
