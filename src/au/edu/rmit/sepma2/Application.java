@@ -46,7 +46,7 @@ public class Application
    private final String lD = interfaceDash + interfaceDash; // leading Dash
    
    private final static String DATE_FORMAT = "dd/MM/yyyy";
-   private final static boolean DEBUG_OUTPUT = true;
+   private final static boolean DEBUG_OUTPUT = false;
 
    /**
     * Main entry point for the IT ticketing system.
