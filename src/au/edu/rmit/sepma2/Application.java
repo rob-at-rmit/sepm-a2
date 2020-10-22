@@ -2,7 +2,6 @@ package au.edu.rmit.sepma2;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.Set;
@@ -335,6 +335,7 @@ public class Application
            System.out.print(buildMenu(interfaceDash, interfaceWidth, "Ticket Report"));
            System.out.println(buildDashes(interfaceDash, interfaceWidth));
            final Date reportStart = getDateInput("Report start period (DD/MM/YYYY): ");
+           System.out.println("Report start? -> " + reportStart);
            final Date reportEnd = getDateInput("Report end period (DD/MM/YYYY): ");
            if (reportStart.after(reportEnd))
            {
@@ -752,36 +753,40 @@ public class Application
     */
    private int getIntInput(String label, Integer... allowedIntegers)
    {
-      String s;
-      int val;
-
-      if (allowedIntegers.length == 0)
-      {
-         s = getStringInput(label);
-         val = Integer.parseInt(s);
-      }
-      else
-      {
-         boolean inArray = false;
-         do
-         {
-            s = getStringInput(label);
-            val = Integer.parseInt(s);
-            for (int n : allowedIntegers)
-            {
-               if (n == val)
+       final List<Integer> allowed = Arrays.asList(allowedIntegers);
+       do
+       {
+           final Optional<Integer> parseAttempt = tryParse(getStringInput(label));
+           if (parseAttempt.isPresent())
+           {
+               final Integer selection = parseAttempt.get();
+               if (allowed.isEmpty() || allowed.contains(selection))
                {
-                  inArray = true;
-                  break;
+                   return selection;
                }
-            }
-            if (!inArray)
-            {
-               printErr("That is an invalid selection.");
-            }
-         } while (!inArray);
-      }
-      return val;
+               else
+               {
+                   printErr("Please enter a valid selection.");
+               }
+           }
+           else
+           {
+               printErr("Please enter a valid number.");
+           }
+        }
+        while (true);
+    }
+   
+   private Optional<Integer> tryParse(final String input) 
+   {
+       try 
+       {
+           return Optional.of(Integer.parseInt(input));
+       }
+       catch (final NumberFormatException e)
+       {
+           return Optional.empty();
+       }
    }
 
    /**
