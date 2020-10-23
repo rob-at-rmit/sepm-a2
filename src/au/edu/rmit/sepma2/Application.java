@@ -568,15 +568,15 @@ public class Application
 
    private void changeSeverity(final Ticket t)
    {
-      String selection;
 
       System.out.println("Severity is Currently: " + t.getSeverity());
       System.out.println("What would you like to change the severity to?");
       System.out.println("LOW");
       System.out.println("MED");
       System.out.println("HIGH");
-
-      selection = getStringInput("Enter Selection: ");
+      
+      final Severity original = t.getSeverity();
+      final String selection  = getStringInput("Enter Selection: ");
   
       if (selection.equalsIgnoreCase(Severity.LOW.name()))
       {
@@ -594,6 +594,15 @@ public class Application
       {
          System.out.println("Enter one of the above options");
       }
+      
+      /*
+       * Reassign ticket if the severity has changed.
+       */
+      if (!t.getSeverity().equals(original))
+      {
+          t.setAssigneeUserName(findAssigneeUserName(t.getSeverity()));
+      }
+      
    }
 
    /**
@@ -1121,7 +1130,7 @@ class Ticket
    private final String firstName;
    private final String lastName;
    private final String submitterUserName;
-   private final String assigneeUserName;
+   private String assigneeUserName;
    private final String contactNumber;
    private final Date submissionDate;
    private final String description;
@@ -1227,6 +1236,11 @@ class Ticket
    public String getAssigneeUserName() 
    {
        return assigneeUserName;
+   }
+   
+   public void setAssigneeUserName(final String assigneeUserName)
+   {
+       this.assigneeUserName = assigneeUserName;
    }
 
    public String getContactNumber()
