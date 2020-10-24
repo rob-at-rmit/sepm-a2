@@ -279,7 +279,9 @@ public class Application
     */
    private void showTicket(Ticket t)
    {
-      int selection;
+       TicketMenuOption selection;
+       final Map<Integer,TicketMenuOption> availableMenuOptions = getTicketMenuOptions();
+
       System.out.println(buildDashes(interfaceDash, interfaceWidth));
       System.out.print(buildMenu(interfaceDash, interfaceWidth, 
                                  "IT Ticketing System",
@@ -294,23 +296,64 @@ public class Application
       System.out.println("  Severity: " + t.getSeverity());
 
       System.out.println(buildDashes(interfaceDash, interfaceWidth));
-
-      System.out.println("Type \"1\" to return to admin: ");
-      System.out.println("Type \"2\" to change severity of ticket: ");
-      System.out.println("Type \"3\" to close ticket: ");
-
-      selection = getIntInput("Enter selection: ");
+      availableMenuOptions.forEach((i,l) -> System.out.println(lD + i + ". " + l.getLabel()));
+      selection = availableMenuOptions.get(
+            getIntInput("Enter selection: ", availableMenuOptions.keySet().toArray(new Integer[0]))
+      );
       switch (selection)
       {
-         case 1:
+         case RETURN_ADMIN:
              break;
-         case 2: 
+         case CHANGE_SEVERITY: 
              changeSeverity(t);
              break;
-         case 3:
+         case CLOSE_TICKET:
              t.close();
              break;
       }
+   }
+   
+   /**
+    * Enum which represents the potential different ticket menu options and associated labels.
+    * @author rob
+    */
+   private enum TicketMenuOption {
+       
+       RETURN_ADMIN("Return to admin"),
+       CHANGE_SEVERITY("Change severity of ticket"),
+       CLOSE_TICKET("Close ticket");
+       
+       private final String label;
+       
+       private TicketMenuOption(final String label) 
+       {
+           this.label = label;
+       }
+       
+       private String getLabel()
+       {
+           return label;
+       }
+   }
+   
+   /**
+    * Determines the appropriate ticket menu options based on role of current user.
+    * @return
+    */
+   private Map<Integer,TicketMenuOption> getTicketMenuOptions() 
+   {
+       final Map<Integer,TicketMenuOption> options = new HashMap<>();
+       options.put(1, TicketMenuOption.CLOSE_TICKET);
+       if (currentUser.getRole().equals(Role.STAFF))
+       {
+           options.put(2, TicketMenuOption.RETURN_ADMIN);
+       }
+       else
+       {
+           options.put(2, TicketMenuOption.CHANGE_SEVERITY);
+           options.put(3, TicketMenuOption.RETURN_ADMIN);
+       }
+       return options;
    }
 
    /**
